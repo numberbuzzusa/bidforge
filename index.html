@@ -440,11 +440,10 @@ footer nav a:hover{color:var(--text)}
     <p class="sec-sub">Tell us what you are working on. You will get a reply with next steps and &mdash; where the scope is clear &mdash; a fixed price.</p>
 
     <div class="form-shell">
-      <form action="https://formsubmit.co/b98d1a646714c623c3158cfce6783d0c" method="POST">
+      <form id="leadForm" action="https://formsubmit.co/ajax/b98d1a646714c623c3158cfce6783d0c" method="POST">
         <input type="hidden" name="_subject" value="New Lead — BidForge Website">
         <input type="hidden" name="_template" value="table">
-        <input type="hidden" name="_captcha" value="true">
-        <input type="hidden" name="_next" value="">
+        <input type="hidden" name="_captcha" value="false">
         <div class="hp" aria-hidden="true"><input type="text" name="_honey" tabindex="-1" autocomplete="off"></div>
         <div class="form-grid">
           <div class="half">
@@ -479,6 +478,7 @@ footer nav a:hover{color:var(--text)}
           </div>
         </div>
         <button type="submit" class="btn btn-gold" id="submitBtn">Send Request</button>
+        <p id="formStatus" class="form-note" role="status" style="display:none"></p>
         <p class="form-note">Prefer email? Write to us directly at <a href="mailto:shahiryarmunir4@gmail.com">shahiryarmunir4@gmail.com</a></p>
       </form>
     </div>
@@ -532,13 +532,40 @@ footer nav a:hover{color:var(--text)}
       });
     });
   }
-  var form = document.querySelector('.form-shell form');
+  var form = document.getElementById('leadForm');
   var btn = document.getElementById('submitBtn');
+  var status = document.getElementById('formStatus');
   if (form && btn) {
-    form.addEventListener('submit', function(){
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
       btn.textContent = 'Sending\u2026';
       btn.disabled = true;
       btn.style.opacity = '.75';
+      var data = {};
+      new FormData(form).forEach(function(v, k){ data[k] = v; });
+      fetch('https://formsubmit.co/ajax/b98d1a646714c623c3158cfce6783d0c', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: JSON.stringify(data)
+      }).then(function(r){
+        if (!r.ok) { throw new Error('send failed'); }
+        return r.json().catch(function(){ return {}; });
+      }).then(function(){
+        form.reset();
+        btn.textContent = 'Request Sent \u2713';
+        if (status) {
+          status.style.display = 'block';
+          status.textContent = 'Thank you \u2014 your request is in our inbox. We reply within one business day.';
+        }
+      }).catch(function(){
+        btn.disabled = false;
+        btn.style.opacity = '';
+        btn.textContent = 'Send Request';
+        if (status) {
+          status.style.display = 'block';
+          status.textContent = 'Something went wrong sending the form. Please email us directly at shahiryarmunir4@gmail.com.';
+        }
+      });
     });
   }
 })();
